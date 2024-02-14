@@ -1,0 +1,86 @@
+import edu.princeton.cs.algs4.WeightedQuickUnionUF;
+
+public class Percolation {
+        private int gridSize;
+        private WeightedQuickUnionUF unionFind;
+        private int openSitesCounter;
+        private int[][] grid;
+        private int topVirtualSite;
+
+        public Percolation(int n) {
+                if (n <= 0) {
+                        throw new IllegalArgumentException("Invalid grid size");
+                }
+                openSitesCounter = 0;
+                gridSize = n;
+                unionFind = new WeightedQuickUnionUF(n * n + 1); // Add one for the virtual site
+                grid = new int[n][n];
+                topVirtualSite = n * n; // Assuming the virtual site index is outside the range of actual sites
+                // Connect top row sites to topVirtualSite
+                for (int col = 0; col < n; col++) {
+                        unionFind.union(xyTo1D(0, col), topVirtualSite);
+                }
+        }
+
+        private int xyTo1D(int row, int col) {
+                return row * gridSize + col;
+        }
+
+        private void checkForNeighbours(int row, int col) {
+                // Check right neighbour
+                if (col < gridSize - 1 && grid[row][col + 1] == 1) {
+                        unionFind.union(xyTo1D(row, col), xyTo1D(row, col + 1));
+                }
+                // Check left neighbour
+                if (col > 0 && grid[row][col - 1] == 1) {
+                        unionFind.union(xyTo1D(row, col), xyTo1D(row, col - 1));
+                }
+                // Check bottom neighbour
+                if (row < gridSize - 1 && grid[row + 1][col] == 1) {
+                        unionFind.union(xyTo1D(row, col), xyTo1D(row + 1, col));
+                }
+                // Check top neighbour
+                if (row > 0 && grid[row - 1][col] == 1) {
+                        unionFind.union(xyTo1D(row, col), xyTo1D(row - 1, col));
+                }
+        }
+
+        public void open(int row, int col) {
+                if (row < 0 || row >= gridSize || col < 0 || col >= gridSize) {
+                        throw new IllegalArgumentException("Invalid grid indices");
+                }
+                if (grid[row][col] == 0) {
+                        grid[row][col] = 1;
+                        openSitesCounter++;
+                        checkForNeighbours(row, col);
+                }
+        }
+
+        public boolean isOpen(int row, int col) {
+                if (row < 0 || row >= gridSize || col < 0 || col >= gridSize) {
+                        throw new IllegalArgumentException("Invalid grid indices");
+                }
+                return grid[row][col] == 1;
+        }
+
+        public boolean isFull(int row, int col) {
+                if (row < 0 || row >= gridSize || col < 0 || col >= gridSize) {
+                        throw new IllegalArgumentException("Invalid grid indices");
+                }
+                return isOpen(row, col) && unionFind.find(xyTo1D(row, col)) == unionFind.find(topVirtualSite);
+        }
+
+        public int numberOfOpenSites() {
+                return openSitesCounter;
+        }
+
+        public boolean percolates() {
+                for (int col = 0; col < gridSize; col++) {
+                        if (isFull(gridSize - 1, col)) {
+                                return true;
+                        }
+                }
+                return false;
+        }
+        
+}
